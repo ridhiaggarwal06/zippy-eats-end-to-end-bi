@@ -35,10 +35,10 @@ All custom calculations are housed in structured metrics folders to preserve cle
 ### 📊 The `Table` Folder (Core Baseline Metrics)
 Tracks foundational operational performance and financial volume.
 ```dax
-* Total Orders = COUNT(fact_orders[order_id])
+Total Orders = COUNT(fact_orders[order_id])
 ```
 ```dax
-* Avg Order Value = DIVIDE([Gross Order Value], [Total Orders], 0)
+Avg Order Value = DIVIDE([Gross Order Value], [Total Orders], 0)
 ```
 
 ### 📈 The GrowthIndicators Folder (Time-Intelligence)
@@ -55,6 +55,49 @@ Net Revenue YoY % = DIVIDE([Net Revenue] - [Net Revenue LY], [Net Revenue LY], 0
 ### 📱 The Product Folder (App Performance & Users)
 Measures user adoption, growth cohorts, and retention rates.
 
+To dynamically track customer tiers, I wrote advanced cohort segmentation formulas that analyze transaction history, app feature usage, and review submissions simultaneously:
+
+-- 1. Power Users: Active customers using the app wallet AND submitting feedback reviews.
+
 ```dax
-Casual Users Count = CALCULATE([Total Users], dim_customer[user_segment] = "Casual")
+Power Users Count = 
+COUNTROWS(
+    FILTER(
+        VALUES(fact_orders[customer_id]),
+        CALCULATE(SUM(fact_orders[wallet_credit])) > 0 &&
+        CALCULATE(COUNTROWS(fact_ratings), CROSSFILTER(fact_orders[order_id], fact_ratings[order_id], Both)) > 0
+    )
+)
+```
+
+-- 2. Casual Users: Low-frequency buyers (2 or fewer orders) who are not Power Users.
+
+```dax
+Casual Users Count = 
+COUNTROWS(
+    FILTER(
+        VALUES(fact_orders[customer_id]),
+        VAR HasWallet = CALCULATE(SUM(fact_orders[wallet_credit])) > 0
+        VAR HasRating = CALCULATE(COUNTROWS(fact_ratings), CROSSFILTER(fact_orders[order_id], fact_ratings[order_id], Both)) > 0
+        VAR IsPower = (HasWallet && HasRating)
+        VAR OrderCount = CALCULATE(COUNT(fact_orders[order_id]), fact_orders[order_status] = "completed")
+        RETURN OrderCount <= 2 && NOT(IsPower)
+    )
+)
+```
+
+-- 3. Core Users: High-frequency buyers (More than 5 orders) who are not Power Users.
+
+```dax
+Core Users Count = 
+COUNTROWS(
+    FILTER(
+        VALUES(fact_orders[customer_id]),
+        VAR HasWallet = CALCULATE(SUM(fact_orders[wallet_credit])) > 0
+        VAR HasRating = CALCULATE(COUNTROWS(fact_ratings), CROSSFILTER(fact_orders[order_id], fact_ratings[order_id], Both)) > 0
+        VAR IsPower = (HasWallet && HasRating)
+        VAR OrderCount = CALCULATE(COUNT(fact_orders[order_id]), fact_orders[order_status] = "completed")
+        RETURN OrderCount > 5 && NOT(IsPower)
+    )
+)
 ```
