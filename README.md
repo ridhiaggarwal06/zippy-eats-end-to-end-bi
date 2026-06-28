@@ -1,6 +1,6 @@
 # Zippy Eats | End-to-End Power BI Data Application
 
-**[Click here to view the Interactive Business Case Study & Executive Summary on Notion](ADD_YOUR_NOTION_LINK_HERE)**
+**[Click here to view the Interactive Business Case Study & Executive Summary on Notion](https://app.notion.com/p/Zippy-Eats-Business-Analytics-Executive-Case-Study-3816a9efe9148038b668fd14a79569d9)**
 
 ---
 
